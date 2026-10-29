@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_kakao_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_kakao';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class KakaoResult {
+  /// Creates a result.
   const KakaoResult({
     this.appKey,
     this.userId,
@@ -56,8 +57,13 @@ class KakaoResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class KakaoCallResult<T> {
+  /// Creates a call result.
   const KakaoCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final KakaoResult? result;
 }
@@ -85,7 +91,7 @@ Future<T> tracedKakao<T>({
   final span = _tracer().startSpan(
     'kakao $operation',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
@@ -93,67 +99,67 @@ Future<T> tracedKakao<T>({
       final res = r.result!;
       final extras = <Attribute<Object>>[];
       if (res.appKey != null) {
-        extras.add(OTel.attributeString('kakao.app_key', res.appKey!));
+        extras.add(OTelAPI.attributeString('kakao.app_key', res.appKey!));
       }
       if (res.userId != null) {
-        extras.add(OTel.attributeString('kakao.user.id', res.userId!));
+        extras.add(OTelAPI.attributeString('kakao.user.id', res.userId!));
       }
       if (res.loginMethod != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'kakao.login.method',
           res.loginMethod!,
         ));
       }
       if (res.scopesGranted != null) {
-        extras.add(OTel.attributeStringList(
+        extras.add(OTelAPI.attributeStringList(
           'kakao.scopes.granted',
           res.scopesGranted!,
         ));
       }
       if (res.scopesRequested != null) {
-        extras.add(OTel.attributeStringList(
+        extras.add(OTelAPI.attributeStringList(
           'kakao.scopes.requested',
           res.scopesRequested!,
         ));
       }
       if (res.accessTokenLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'kakao.access_token.length',
           res.accessTokenLength!,
         ));
       }
       if (res.refreshTokenLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'kakao.refresh_token.length',
           res.refreshTokenLength!,
         ));
       }
       if (res.expiresInSec != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'kakao.expires_in_sec',
           res.expiresInSec!,
         ));
       }
       if (res.shareTemplateId != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'kakao.share.template_id',
           res.shareTemplateId!,
         ));
       }
       if (res.shareType != null) {
-        extras.add(OTel.attributeString('kakao.share.type', res.shareType!));
+        extras.add(OTelAPI.attributeString('kakao.share.type', res.shareType!));
       }
       if (res.feedSent != null) {
-        extras.add(OTel.attributeBool('kakao.feed.sent', res.feedSent!));
+        extras.add(OTelAPI.attributeBool('kakao.feed.sent', res.feedSent!));
       }
       if (res.errorCode != null) {
-        extras.add(OTel.attributeString('kakao.error.code', res.errorCode!));
+        extras.add(OTelAPI.attributeString('kakao.error.code', res.errorCode!));
         if (res.errorCode != 'KAE003') {
           span.setStatus(SpanStatusCode.Error, 'Kakao ${res.errorCode}');
         }
       }
       if (res.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           res.statusCode!,
         ));
@@ -161,13 +167,13 @@ Future<T> tracedKakao<T>({
           span.setStatus(SpanStatusCode.Error, 'Kakao HTTP ${res.statusCode}');
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
